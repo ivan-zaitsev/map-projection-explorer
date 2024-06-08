@@ -15,13 +15,13 @@ func NewEpsgExtentRepository(db *sql.DB) EpsgExtentRepository {
 
 func (e *epsgExtentRepository) FindAllAfterCode(code *int, size int) ([]*model.EpsgExtentRecord, error) {
 	query := `
-		SELECT
-		    ec.coord_ref_sys_name,
-			ec.coord_ref_sys_code
-		FROM epsg_coordinatereferencesystem ec
-		WHERE $1::integer IS NULL OR ec.coord_ref_sys_code > $1
-		ORDER BY ec.coord_ref_sys_code LIMIT $2
-	`
+          SELECT
+              ec.coord_ref_sys_name,
+               ec.coord_ref_sys_code
+          FROM epsg_coordinatereferencesystem ec
+          WHERE $1::integer IS NULL OR ec.coord_ref_sys_code > $1
+          ORDER BY ec.coord_ref_sys_code LIMIT $2
+     `
 
 	rows, err := e.db.Query(query, code, size)
 	if err != nil {
@@ -46,18 +46,18 @@ func (e *epsgExtentRepository) FindAllAfterCode(code *int, size int) ([]*model.E
 
 func (e *epsgExtentRepository) FindByCode(code int) (*model.EpsgExtentRecord, error) {
 	query := `
-		SELECT
-		    ec.coord_ref_sys_name,
-			ec.coord_ref_sys_code,
-			ee.bbox_south_bound_lat, 
-			ee.bbox_west_bound_lon, 
-			ee.bbox_north_bound_lat, 
-			ee.bbox_east_bound_lon 
-		FROM epsg_coordinatereferencesystem ec
-		LEFT JOIN epsg_usage eu ON ec.coord_ref_sys_code = eu.object_code
-		LEFT JOIN epsg_extent ee ON eu.extent_code = ee.extent_code
-		WHERE ec.coord_ref_sys_code = $1
-	`
+          SELECT
+              ec.coord_ref_sys_name,
+               ec.coord_ref_sys_code,
+               ee.bbox_south_bound_lat, 
+               ee.bbox_west_bound_lon, 
+               ee.bbox_north_bound_lat, 
+               ee.bbox_east_bound_lon 
+          FROM epsg_coordinatereferencesystem ec
+          LEFT JOIN epsg_usage eu ON ec.coord_ref_sys_code = eu.object_code
+          LEFT JOIN epsg_extent ee ON eu.extent_code = ee.extent_code
+          WHERE ec.coord_ref_sys_code = $1
+     `
 
 	row := e.db.QueryRow(query, code)
 

@@ -1,13 +1,11 @@
-import { Component, afterNextRender } from '@angular/core';
-import proj4 from 'proj4';
-import { register} from 'ol/proj/proj4';
-import { transformExtent, get as getProjection, ProjectionLike } from 'ol/proj';
-import { Map, View } from 'ol';
-import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
-import { Vector as VectorSource, OSM } from 'ol/source';
+import {afterNextRender, Component} from '@angular/core';
+import {get as getProjection, ProjectionLike, transformExtent} from 'ol/proj';
+import {Map, View} from 'ol';
+import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
+import {OSM, Vector as VectorSource} from 'ol/source';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
-import { Style, Stroke, Fill } from 'ol/style';
+import {Fill, Stroke, Style} from 'ol/style';
 
 // @ts-ignore
 import OLCesium from 'olcs';
