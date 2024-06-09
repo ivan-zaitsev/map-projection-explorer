@@ -37,9 +37,11 @@ func (c *crsServer) FindCoordinateReferenceSystem(w http.ResponseWriter, r *http
 func (c *crsServer) FindAllCoordinateReferenceSystems(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	cursorCode, err := extractCursorCode(query.Get("cursorCode"))
+	search := query.Get("search")
+
+	pageCursor, err := extractPageCursor(query.Get("pageCursor"))
 	if err != nil {
-		serviceError := &dto.ServiceError{Code: dto.ErrorInvalidRequest, Message: "Request parameter 'cursorCode' invalid"}
+		serviceError := &dto.ServiceError{Code: dto.ErrorInvalidRequest, Message: "Request parameter 'pageCursor' invalid"}
 		writeResponse(w, serviceError, http.StatusBadRequest)
 		return
 	}
@@ -51,21 +53,20 @@ func (c *crsServer) FindAllCoordinateReferenceSystems(w http.ResponseWriter, r *
 		return
 	}
 
-	crsRecords, serviceErr := c.crsService.FindAllCoordinateReferenceSystems(cursorCode, pageSize)
+	crsRecords, serviceErr := c.crsService.FindAllCoordinateReferenceSystems(search, pageCursor, pageSize)
 	if serviceErr != nil {
 		writeResponse(w, serviceErr, serviceErr.Code.Value)
 		return
 	}
 
-	page := dto.Page[dto.CrsRecord]{Content: crsRecords}
-	writeResponse(w, page, http.StatusOK)
+	writeResponse(w, crsRecords, http.StatusOK)
 }
 
-func extractCursorCode(cursorCode string) (*int, error) {
-	if cursorCode == "" {
+func extractPageCursor(pageCursor string) (*int, error) {
+	if pageCursor == "" {
 		return nil, nil
 	}
-	val, err := strconv.Atoi(cursorCode)
+	val, err := strconv.Atoi(pageCursor)
 	if err != nil {
 		return nil, err
 	}

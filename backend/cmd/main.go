@@ -1,14 +1,14 @@
 package main
 
 import (
+	_ "github.com/lib/pq"
+	"github.com/rs/cors"
+	"github.com/spf13/viper"
 	"log"
 	"map-projection-explorer-backend/internal/repository"
 	http_server "map-projection-explorer-backend/internal/server/http"
 	"map-projection-explorer-backend/internal/service"
 	"net/http"
-
-	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -54,13 +54,14 @@ func setupServices() {
 
 func setupHttpServer() {
 	mux := http.NewServeMux()
-	server := http_server.NewServer(crsService)
+	handler := cors.Default().Handler(mux)
 
+	server := http_server.NewServer(crsService)
 	http_server.RegisterServerHandlers(mux, server)
 
 	log.Println("Starting http server")
 
-	err := http.ListenAndServe(":"+viper.GetString("server.port"), mux)
+	err := http.ListenAndServe(":"+viper.GetString("server.port"), handler)
 	if err != nil {
 		log.Fatalf("Failed to start http server, %s", err)
 	}

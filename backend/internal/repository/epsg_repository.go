@@ -13,17 +13,21 @@ func NewEpsgExtentRepository(db *sql.DB) EpsgExtentRepository {
 	return &epsgExtentRepository{db: db}
 }
 
-func (e *epsgExtentRepository) FindAllAfterCode(code *int, size int) ([]*model.EpsgExtentRecord, error) {
+func (e *epsgExtentRepository) FindAllAfterCode(
+	search string, afterCode *int, size int) ([]*model.EpsgExtentRecord, error) {
+
 	query := `
           SELECT
               ec.coord_ref_sys_name,
-               ec.coord_ref_sys_code
+              ec.coord_ref_sys_code
           FROM epsg_coordinatereferencesystem ec
-          WHERE $1::integer IS NULL OR ec.coord_ref_sys_code > $1
-          ORDER BY ec.coord_ref_sys_code LIMIT $2
-     `
+          WHERE 
+              (LOWER(ec.coord_ref_sys_name) LIKE LOWER(CONCAT('%%',$1::varchar,'%%')) OR 
+               LOWER(ec.coord_ref_sys_code::varchar) LIKE LOWER(CONCAT('%%',$1::varchar,'%%'))) AND 
+              ($2::integer IS NULL OR ec.coord_ref_sys_code > $2)
+          ORDER BY ec.coord_ref_sys_code LIMIT $3`
 
-	rows, err := e.db.Query(query, code, size)
+	rows, err := e.db.Query(query, search, afterCode, size)
 	if err != nil {
 		return nil, err
 	}
@@ -48,16 +52,15 @@ func (e *epsgExtentRepository) FindByCode(code int) (*model.EpsgExtentRecord, er
 	query := `
           SELECT
               ec.coord_ref_sys_name,
-               ec.coord_ref_sys_code,
-               ee.bbox_south_bound_lat, 
-               ee.bbox_west_bound_lon, 
-               ee.bbox_north_bound_lat, 
-               ee.bbox_east_bound_lon 
+              ec.coord_ref_sys_code,
+              ee.bbox_south_bound_lat, 
+              ee.bbox_west_bound_lon, 
+              ee.bbox_north_bound_lat, 
+              ee.bbox_east_bound_lon 
           FROM epsg_coordinatereferencesystem ec
           LEFT JOIN epsg_usage eu ON ec.coord_ref_sys_code = eu.object_code
           LEFT JOIN epsg_extent ee ON eu.extent_code = ee.extent_code
-          WHERE ec.coord_ref_sys_code = $1
-     `
+          WHERE ec.coord_ref_sys_code = $1`
 
 	row := e.db.QueryRow(query, code)
 

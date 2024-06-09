@@ -2,10 +2,12 @@ package service
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"map-projection-explorer-backend/internal/domain/dto"
 	"map-projection-explorer-backend/internal/domain/model"
 	"map-projection-explorer-backend/internal/repository"
+	"math"
 )
 
 type crsService struct {
@@ -19,7 +21,7 @@ func NewCrsService(epsgRepository repository.EpsgExtentRepository, srsRepository
 
 func (c *crsService) FindCoordinateReferenceSystem(code int) (*dto.CrsRecord, *dto.ServiceError) {
 	epsgRecord, err := c.epsgRepository.FindByCode(code)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, &dto.ServiceError{Code: dto.ErrorCodeNotFound, Message: "Extent with such code not found"}
 	}
 	if err != nil {
@@ -28,7 +30,7 @@ func (c *crsService) FindCoordinateReferenceSystem(code int) (*dto.CrsRecord, *d
 	}
 
 	srsRecord, err := c.srsRepository.FindByCode(code)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, &dto.ServiceError{Code: dto.ErrorCodeNotFound, Message: "SRS with such code not found"}
 	}
 	if err != nil {
@@ -40,8 +42,14 @@ func (c *crsService) FindCoordinateReferenceSystem(code int) (*dto.CrsRecord, *d
 	return crsRecord, nil
 }
 
-func (c *crsService) FindAllCoordinateReferenceSystems(cursorCode *int, pageSize int) ([]*dto.CrsRecord, *dto.ServiceError) {
-	epsgRecords, err := c.epsgRepository.FindAllAfterCode(cursorCode, pageSize)
+func (c *crsService) FindAllCoordinateReferenceSystems(
+	search string, pageCursor *int, pageSize int) (*dto.Page[dto.CrsRecord], *dto.ServiceError) {
+
+	if pageSize <= 0 || pageSize == math.MaxInt {
+		return nil, &dto.ServiceError{Code: dto.ErrorInvalidRequest, Message: "Invalid page size"}
+	}
+
+	epsgRecords, err := c.epsgRepository.FindAllAfterCode(search, pageCursor, pageSize+1)
 	if err != nil {
 		log.Printf("Failed to find epsg records by code: %s", err)
 		return nil, &dto.ServiceError{Code: dto.ErrorCodeInternalServer, Message: "Unknown error"}
@@ -51,7 +59,22 @@ func (c *crsService) FindAllCoordinateReferenceSystems(cursorCode *int, pageSize
 	for _, epsgRecord := range epsgRecords {
 		crsRecords = append(crsRecords, convertToCrsRecord(epsgRecord))
 	}
-	return crsRecords, nil
+
+	if len(epsgRecords) > pageSize {
+		crsRecords = crsRecords[:pageSize]
+	}
+	page := dto.Page[dto.CrsRecord]{
+		Content:        crsRecords,
+		NextPageCursor: findNextPageCursor(crsRecords, len(epsgRecords), pageSize),
+	}
+	return &page, nil
+}
+
+func findNextPageCursor(records []*dto.CrsRecord, recordsLen, pageSize int) *int {
+	if len(records) == 0 || recordsLen <= pageSize {
+		return nil
+	}
+	return &records[len(records)-1].Code
 }
 
 func convertToCrsRecord(epsgRecord *model.EpsgExtentRecord) *dto.CrsRecord {
@@ -71,11 +94,27 @@ func convertToCrsRecordFull(epsgRecord *model.EpsgExtentRecord, srsRecord *model
 			Value: srsRecord.Proj4text,
 		},
 		Extent: &dto.CrsRecordExtent{
-			WestLongitude: epsgRecord.BboxWestBoundLon,
-			SouthLatitude: epsgRecord.BboxSouthBoundLat,
-			EastLongitude: epsgRecord.BboxEastBoundLon,
-			NorthLatitude: epsgRecord.BboxNorthBoundLat,
+			WestLongitude: &epsgRecord.BboxWestBoundLon,
+			SouthLatitude: &epsgRecord.BboxSouthBoundLat,
+			EastLongitude: &epsgRecord.BboxEastBoundLon,
+			NorthLatitude: &epsgRecord.BboxNorthBoundLat,
 		},
+		ExtentCenter: calculateExtentCenter(epsgRecord),
 	}
 	return &crsRecord
+}
+
+func calculateExtentCenter(epsgRecord *model.EpsgExtentRecord) *dto.CrsRecordExtentCenter {
+	n := epsgRecord.BboxNorthBoundLat
+	s := epsgRecord.BboxSouthBoundLat
+	w := epsgRecord.BboxWestBoundLon
+	e := epsgRecord.BboxEastBoundLon
+
+	lon := w + 180 + (360-(w+180)+e+180)/2.0
+	lat := (n-s)/2.0 + s
+
+	return &dto.CrsRecordExtentCenter{
+		Longitude: &lon,
+		Latitude:  &lat,
+	}
 }

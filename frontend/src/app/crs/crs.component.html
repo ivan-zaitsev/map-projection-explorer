@@ -1,0 +1,46 @@
+<div class="input-group">
+  <input #search class="form-control" placeholder="Text search" type="text">
+  <div class="input-group-append">
+    <button (click)="onSearch(search.value)" class="btn btn-primary"
+            type="button">
+      Search
+    </button>
+  </div>
+</div>
+
+<table class="table table-bordered">
+  <thead>
+  <tr>
+    <th scope="col">Name</th>
+    <th scope="col">Code</th>
+    <th scope="col">Action</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let crs of coordinateReferenceSystems">
+    <td>{{ crs.name }}</td>
+    <td>{{ crs.code }}</td>
+    <td>
+      <a [queryParams]="{code: crs.code}"
+         routerLink="/map2d"
+         target="_blank">
+        <button class="btn btn-primary btn-sm" type="button"><span class="bi-map"></span></button>
+      </a>
+      &nbsp;
+      <a [queryParams]="{code: crs.code}"
+         routerLink="/map3d"
+         target="_blank">
+        <button class="btn btn-primary btn-sm" type="button"><span class="bi bi-globe"></span></button>
+      </a>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<div class="btn-group">
+  <button (click)="onLoadMore()" [disabled]="nextPageCursor === undefined"
+          class="btn btn-primary"
+          type="button">
+    Load more
+  </button>
+</div>

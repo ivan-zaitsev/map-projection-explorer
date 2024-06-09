@@ -7,14 +7,16 @@ var (
 )
 
 type Page[T any] struct {
-	Content []*T `json:"content"`
+	Content        []*T `json:"content,omitempty"`
+	NextPageCursor *int `json:"nextPageCursor,omitempty"`
 }
 
 type CrsRecord struct {
-	Name       string               `json:"name,omitempty"`
-	Code       int                  `json:"code,omitempty"`
-	Definition *CrsRecordDefinition `json:"definition,omitempty"`
-	Extent     *CrsRecordExtent     `json:"extent,omitempty"`
+	Name         string                 `json:"name,omitempty"`
+	Code         int                    `json:"code,omitempty"`
+	Definition   *CrsRecordDefinition   `json:"definition,omitempty"`
+	Extent       *CrsRecordExtent       `json:"extent,omitempty"`
+	ExtentCenter *CrsRecordExtentCenter `json:"extentCenter,omitempty"`
 }
 
 type CrsRecordDefinition struct {
@@ -23,8 +25,13 @@ type CrsRecordDefinition struct {
 }
 
 type CrsRecordExtent struct {
-	WestLongitude float64 `json:"west_longitude,omitempty"`
-	SouthLatitude float64 `json:"south_latitude,omitempty"`
-	EastLongitude float64 `json:"east_longitude,omitempty"`
-	NorthLatitude float64 `json:"north_latitude,omitempty"`
+	WestLongitude *float64 `json:"westLongitude,omitempty"`
+	SouthLatitude *float64 `json:"southLatitude,omitempty"`
+	EastLongitude *float64 `json:"eastLongitude,omitempty"`
+	NorthLatitude *float64 `json:"northLatitude,omitempty"`
+}
+
+type CrsRecordExtentCenter struct {
+	Longitude *float64 `json:"longitude,omitempty"`
+	Latitude  *float64 `json:"latitude,omitempty"`
 }

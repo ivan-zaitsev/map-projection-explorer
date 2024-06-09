@@ -16,10 +16,9 @@ func NewSrsRepository(db *sql.DB) SrsRepository {
 func (s *srsRepository) FindByCode(code int) (*model.SrsRecord, error) {
 	query := `
           SELECT 
-               proj4text
+              proj4text
           FROM spatial_ref_sys
-          WHERE srid = $1
-     `
+          WHERE srid = $1`
 
 	row := s.db.QueryRow(query, code)
 

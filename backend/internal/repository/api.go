@@ -19,7 +19,7 @@ func NewDatabase(uri string) (*sql.DB, error) {
 }
 
 type EpsgExtentRepository interface {
-	FindAllAfterCode(code *int, size int) ([]*model.EpsgExtentRecord, error)
+	FindAllAfterCode(search string, afterCode *int, size int) ([]*model.EpsgExtentRecord, error)
 	FindByCode(code int) (*model.EpsgExtentRecord, error)
 }
 

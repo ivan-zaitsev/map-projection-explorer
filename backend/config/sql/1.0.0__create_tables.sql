@@ -24,14 +24,14 @@ CREATE TABLE epsg_change
 
 CREATE TABLE epsg_conventionalrs
 (
-    conventional_rs_code INTEGER     NOT NULL,
-    conventional_rs_name VARCHAR(80) NOT NULL,
+    conventional_rs_code INTEGER      NOT NULL,
+    conventional_rs_name VARCHAR(80)  NOT NULL,
     remarks              VARCHAR(254) NULL,
     information_source   VARCHAR(254) NULL,
-    data_source          VARCHAR(40) NOT NULL,
-    revision_date        DATE        NOT NULL,
+    data_source          VARCHAR(40)  NOT NULL,
+    revision_date        DATE         NOT NULL,
     change_id            VARCHAR(254) NULL,
-    deprecated           SMALLINT    NOT NULL,
+    deprecated           SMALLINT     NOT NULL,
     CONSTRAINT pk_conventional_rs PRIMARY KEY (conventional_rs_code)
 );
 
